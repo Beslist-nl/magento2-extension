@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+
+    <head>
+        <script type="text/javascript" src="Beslist_BeslistTracking::js/beslist-handler.min.js" async=""/>
+    </head>
+
+    <body>
+        <referenceContainer name="after.body.start">
+            <block class="Beslist\BeslistTracking\Block\ConfigurationLoader" name="Beslist_BeslistTracking_configuration_loader" template="Beslist_BeslistTracking::configuration-loader.phtml"/>
+        </referenceContainer>
+    </body>
+</page>

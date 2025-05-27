@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "outDir": "./view/frontend/web/js",
+    "rootDir": "./ts",
+    "module": "ESNext",
+    "target": "ES5",
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "strict": true,
+    "baseUrl": "./",
+    "paths": {
+      "*": [
+        "node_modules/*"
+      ]
+    }
+  },
+  "include": [
+    "ts/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
