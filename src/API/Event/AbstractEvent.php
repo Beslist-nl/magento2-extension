@@ -43,7 +43,7 @@ abstract class AbstractEvent
     public LocationData $location;
 
     /**
-     * Constructs a new event with the specified parameters and initializes related data.
+     * AbstractEvent constructor.
      *
      * @param string $eventName
      * @param string $advertiserID
