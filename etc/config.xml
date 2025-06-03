@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/config.xsd">
+    <default>
+        <beslist_tracking_tracking>
+            <tracking_settings>
+                <enable_tracking>0</enable_tracking>
+            </tracking_settings>
+        </beslist_tracking_tracking>
+        <beslist_tracking_consent>
+            <consent_settings>
+                <consent_handler></consent_handler>
+            </consent_settings>
+        </beslist_tracking_consent>
+    </default>
+</config>

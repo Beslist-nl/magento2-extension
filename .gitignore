@@ -1,0 +1,4 @@
+/vendor/
+/node_modules/
+/etc/csp_whitelist.xml
+/composer.lock

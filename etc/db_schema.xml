@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework/Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="beslist_tracking_queued_events" resource="default" engine="innodb" comment="Queued Beslist Events">
+        <column name="id" xsi:type="int" nullable="false" unsigned="true" comment="ID" identity="true"/>
+        <column name="event_uid" xsi:type="varchar" length="250" nullable="false" comment="User UID"/>
+        <column name="date_created" xsi:type="timestamp" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column name="event_name" xsi:type="varchar" length="250" nullable="false" comment="Name"/>
+        <column name="user_uid" xsi:type="varchar" length="250" nullable="false" comment="User UID"/>
+        <column name="session_uid" xsi:type="varchar" length="250" nullable="false" comment="Session UID"/>
+        <column name="user_agent" xsi:type="varchar" length="250" nullable="false" comment="User agent"/>
+        <column name="language" xsi:type="varchar" length="250" nullable="true" comment="Language"/>
+        <column name="screen_height" xsi:type="int" unsigned="true" nullable="true" comment="Screen height"/>
+        <column name="screen_width" xsi:type="int" unsigned="true" nullable="true" comment="Screen width"/>
+        <column name="location" xsi:type="text" nullable="false" comment="JSON encoded Location data"/>
+        <column name="context" xsi:type="text" nullable="false" comment="JSON encoded Context data"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="id"/>
+        </constraint>
+    </table>
+</schema>

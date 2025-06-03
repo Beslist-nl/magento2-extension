@@ -1,0 +1,54 @@
+name: Build Magento2 Plugin ZIP
+
+on:
+  release:
+    types: [published]  # Trigger when a new release is published
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Upload Release Asset
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4  # Updated to latest
+
+      - name: Set env
+        run: echo "RELEASE_VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+
+      - name: Install PHP dependencies (without dev)
+        run: |
+          composer install --no-dev --optimize-autoloader || true
+
+      - name: Install Node dependencies and build WebPack
+        run: |
+          if [ -f "package.json" ]; then
+            npm install
+            npm run build || true
+          fi
+
+      - name: Create build directory
+        run: |
+          mkdir build
+
+      - name: Create ZIP file
+        run: |
+          zip -X -r build/Beslist_BeslistTracking-${{ env.RELEASE_VERSION }}.zip . \
+          -x "node_modules/*" "vendor/*" "*.git*" ".idea/*" ".vscode/*" \
+            "composer.lock" "webpack.config.js" "tsconfig.json" "ts/*" "package.json" "package-lock.json" \
+            "*.DS_Store" "README.md" "*.zip" "build/*"
+
+      - name: Upload ZIP as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: beslist-tracking-zip
+          path: build/Beslist_BeslistTracking-${{ env.RELEASE_VERSION }}.zip
+
+      - name: Upload ZIP to Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/Beslist_BeslistTracking-${{ env.RELEASE_VERSION }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

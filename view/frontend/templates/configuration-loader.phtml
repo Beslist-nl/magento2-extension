@@ -1,0 +1,11 @@
+<script async>
+    require(['Magento_Customer/js/customer-data'], function (customerData) {
+        customerData.reload(['beslist-tracking-config'], true).done(function () {
+            const section = customerData.get('beslist-tracking-config');
+
+            if (section) {
+                window.dispatchEvent(new CustomEvent('beslistTrackingConfigReady', { detail: section() }));
+            }
+        });
+    });
+</script>
