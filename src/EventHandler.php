@@ -94,12 +94,12 @@ class EventHandler
      */
     public function handleEvent(
         string $eventName,
-        int    $screenWidth = null,
-        int    $screenHeight = null,
+        ?int    $screenWidth = null,
+        ?int    $screenHeight = null,
         array  $location = [],
         array  $context = [],
-        string $sessionID = null,
-        string $userID = null
+        ?string $sessionID = null,
+        ?string $userID = null
     ): AbstractEvent {
         $advertiserID = $this->settingsHelper->getAdvertiserID();
 
