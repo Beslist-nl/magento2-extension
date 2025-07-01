@@ -83,9 +83,9 @@ class EventFactory
         string $advertiserID,
         string $userID,
         string $sessionID,
-        float $value = null,
-        string $transactionId = null,
-        bool $includingVat = null
+        ?float $value = null,
+        ?string $transactionId = null,
+        ?bool $includingVat = null
     ): Conversion {
         $event = new Conversion($advertiserID, $userID, $sessionID);
         $event->setEventID($event->getSessionID() . '-' . $this->helperFunctions->generateUUID());
