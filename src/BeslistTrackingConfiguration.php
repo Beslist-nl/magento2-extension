@@ -8,7 +8,7 @@ use Beslist\BeslistTracking\src\Consent\CustomConsentManagementPlatform;
 
 class BeslistTrackingConfiguration
 {
-    public const BESLIST_TRACKING_VERSION = '1.0.0';
+    public const BESLIST_TRACKING_VERSION = '1.1.0';
     public const OPTION_GROUP_PREFIX = 'beslist_tracking_options_';
     private const OPTION_PREFIX = 'beslist_tracking_option_';
     public const ADVERTISER_IDS_FIELD_ID = self::OPTION_PREFIX . 'advertiser_ids';
