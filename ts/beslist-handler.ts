@@ -56,13 +56,13 @@ class BeslistHandler {
         CookieHandler.setCookie(this.configuration.consentCookieName, JSON.stringify(consentData), 365 * 24 * 60 * 60);
 
         if (this.configuration.hasQueuedEvents && this.isConsentOfTypesGranted(this.configuration.requiredConsentTypes, consentData.consent)) {
-            this.eventHandler.sendQueuedEvents().subscribe(() => {
+            this.eventHandler.sendQueuedEvents().then(() => {
                 this.configuration.hasQueuedEvents = false;
             });
         }
 
         if (!this.hasSentSessionStart && this.eventHandler.requiresSessionStart()) {
-            this.eventHandler.sendSessionStart().subscribe(() => {
+            this.eventHandler.sendSessionStart().then(() => {
                 this.hasSentSessionStart = true;
 
                 if (!this.isConsentOfTypesGranted(this.configuration.requiredConsentTypes, consentData.consent)) {
