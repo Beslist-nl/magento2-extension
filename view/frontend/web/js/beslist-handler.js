@@ -48,7 +48,6 @@ var __assign = (undefined && undefined.__assign) || function () {
 
 var AbstractConsentHandler = /** @class */ (function () {
     function AbstractConsentHandler() {
-        var _this = this;
         this.listeners = [];
         var initialConsent = this.getInitialConsent();
         this.consentValues = {
@@ -58,13 +57,11 @@ var AbstractConsentHandler = /** @class */ (function () {
             performance: initialConsent.performance || 'denied',
             marketing: initialConsent.marketing || 'denied',
         };
-        this.currentConsent = {
-            subscribe: function (listener) {
-                _this.listeners.push(listener);
-                _this.emit();
-            },
-        };
     }
+    AbstractConsentHandler.prototype.subscribe = function (listener) {
+        this.listeners.push(listener);
+        this.emit();
+    };
     AbstractConsentHandler.prototype.emit = function () {
         var data = {
             consent: __assign({}, this.consentValues),
@@ -527,7 +524,7 @@ var BeslistHandler = /** @class */ (function () {
             console.info('Beslist Tracking: No ConsentHandler initialized.');
         }
         else {
-            this.consentHandler.currentConsent.subscribe(function (consentData) { return _this.handleConsentUpdateEvent(consentData); });
+            this.consentHandler.subscribe(function (consentData) { return _this.handleConsentUpdateEvent(consentData); });
             this.consentHandler.initialize();
         }
     }

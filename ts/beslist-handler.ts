@@ -1,5 +1,5 @@
 import { BeslistHandlerConfigurationInterface } from './beslist-handler-configuration.interface';
-import { AbstractConsentHandler, ConsentStatusData } from './ConsentHandler/abstract.consent-handler';
+import { AbstractConsentHandler, ConsentData, ConsentStatusData } from './ConsentHandler/abstract.consent-handler';
 import { CookieYesConsentHandler } from './ConsentHandler/cookie-yes.consent-handler';
 import { CookiebotConsentHandler } from './ConsentHandler/cookiebot.consent-handler';
 import { CustomConsentHandler } from './ConsentHandler/custom.consent-handler';
@@ -33,7 +33,7 @@ class BeslistHandler {
         if (!this.consentHandler) {
             console.info('Beslist Tracking: No ConsentHandler initialized.');
         } else {
-            this.consentHandler.currentConsent.subscribe((consentData) => this.handleConsentUpdateEvent(consentData));
+            this.consentHandler.subscribe((consentData) => this.handleConsentUpdateEvent(consentData));
             this.consentHandler.initialize();
         }
     }
@@ -52,7 +52,7 @@ class BeslistHandler {
         }
     }
 
-    public handleConsentUpdateEvent(consentData: { handler?: string, consent: ConsentStatusData }): void {
+    public handleConsentUpdateEvent(consentData: ConsentData): void {
         CookieHandler.setCookie(this.configuration.consentCookieName, JSON.stringify(consentData), 365 * 24 * 60 * 60);
 
         if (this.configuration.hasQueuedEvents && this.isConsentOfTypesGranted(this.configuration.requiredConsentTypes, consentData.consent)) {

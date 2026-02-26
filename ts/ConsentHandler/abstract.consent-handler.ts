@@ -26,7 +26,6 @@ export interface ConsentData {
 type ConsentListener = (data: ConsentData) => void;
 
 export abstract class AbstractConsentHandler {
-    public currentConsent: { subscribe: (listener: ConsentListener) => void };
     private consentValues: Required<ConsentStatusData>;
     private listeners: ConsentListener[] = [];
 
@@ -40,13 +39,11 @@ export abstract class AbstractConsentHandler {
             performance: initialConsent.performance || 'denied',
             marketing: initialConsent.marketing || 'denied',
         };
+    }
 
-        this.currentConsent = {
-            subscribe: (listener: ConsentListener) => {
-                this.listeners.push(listener);
-                this.emit();
-            },
-        };
+    public subscribe(listener: ConsentListener): void {
+        this.listeners.push(listener);
+        this.emit();
     }
 
     private emit(): void {
