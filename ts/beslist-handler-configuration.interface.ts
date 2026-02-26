@@ -9,5 +9,4 @@ export interface BeslistHandlerConfigurationInterface {
     sessionIDCookieName: string,
     consentFromAction: {[key: string]: string},
     areCustomTriggersEnabled: boolean,
-    formKey: string,
 }

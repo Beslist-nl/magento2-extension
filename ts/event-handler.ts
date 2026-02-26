@@ -66,7 +66,7 @@ export class EventHandler {
             }
             xmlHttpRequest.open('POST', this.configuration.eventApiUrl, true);
             xmlHttpRequest.setRequestHeader('Content-Type', 'application/json');
-            xmlHttpRequest.setRequestHeader('X-Beslist-Token', this.configuration.formKey);
+            xmlHttpRequest.setRequestHeader('X-Beslist-Token', CookieHandler.getCookie('form_key') || '');
             xmlHttpRequest.send(JSON.stringify(eventData));
         }));
     }
@@ -85,7 +85,7 @@ export class EventHandler {
             }
             xmlHttpRequest.open('POST', this.configuration.queuedEventsApiUrl, true);
             xmlHttpRequest.setRequestHeader('Content-Type', 'application/json');
-            xmlHttpRequest.setRequestHeader('X-Beslist-Token', this.configuration.formKey);
+            xmlHttpRequest.setRequestHeader('X-Beslist-Token', CookieHandler.getCookie('form_key') || '');
             xmlHttpRequest.send();
         }));
     }
