@@ -8,7 +8,6 @@ use Beslist\BeslistTracking\src\EventHandler;
 use Beslist\BeslistTracking\src\Helper\HelperFunctions;
 use Magento\Customer\CustomerData\SectionSourceInterface;
 use Beslist\BeslistTracking\Helper\SettingsHelper;
-use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\Exception\LocalizedException;
 
 class TrackingConfiguration implements SectionSourceInterface
@@ -17,8 +16,6 @@ class TrackingConfiguration implements SectionSourceInterface
     protected SettingsHelper $settingsHelper;
     /** @var EventHandler */
     private EventHandler $eventHandler;
-    /** @var FormKey */
-    private FormKey $formKey;
     /** @var ConsentHelper */
     private ConsentHelper $consentHelper;
     /** @var HelperFunctions */
@@ -29,20 +26,17 @@ class TrackingConfiguration implements SectionSourceInterface
      *
      * @param SettingsHelper $settingsHelper
      * @param EventHandler $eventHandler
-     * @param FormKey $formKey
      * @param ConsentHelper $consentHelper
      * @param HelperFunctions $helperFunctions
      */
     public function __construct(
         SettingsHelper $settingsHelper,
         EventHandler   $eventHandler,
-        FormKey        $formKey,
         ConsentHelper  $consentHelper,
         HelperFunctions $helperFunctions
     ) {
         $this->settingsHelper = $settingsHelper;
         $this->eventHandler = $eventHandler;
-        $this->formKey = $formKey;
         $this->consentHelper = $consentHelper;
         $this->helperFunctions = $helperFunctions;
     }
@@ -69,7 +63,6 @@ class TrackingConfiguration implements SectionSourceInterface
             'sessionIDCookieName' => BeslistTrackingConfiguration::SESSION_ID_COOKIE_NAME,
             'consentFromAction' => $this->consentHelper->getCustomConsent(true),
             'areCustomTriggersEnabled' => $this->settingsHelper->areCustomConsentTriggersEnabled(),
-            'formKey' => $this->formKey->getFormKey(),
         ];
     }
 }

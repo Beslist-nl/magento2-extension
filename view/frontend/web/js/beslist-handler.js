@@ -2510,7 +2510,7 @@ var EventHandler = /** @class */ (function () {
             };
             xmlHttpRequest.open('POST', _this.configuration.eventApiUrl, true);
             xmlHttpRequest.setRequestHeader('Content-Type', 'application/json');
-            xmlHttpRequest.setRequestHeader('X-Beslist-Token', _this.configuration.formKey);
+            xmlHttpRequest.setRequestHeader('X-Beslist-Token', CookieHandler.getCookie('form_key') || '');
             xmlHttpRequest.send(JSON.stringify(eventData));
         }));
     };
@@ -2530,7 +2530,7 @@ var EventHandler = /** @class */ (function () {
             };
             xmlHttpRequest.open('POST', _this.configuration.queuedEventsApiUrl, true);
             xmlHttpRequest.setRequestHeader('Content-Type', 'application/json');
-            xmlHttpRequest.setRequestHeader('X-Beslist-Token', _this.configuration.formKey);
+            xmlHttpRequest.setRequestHeader('X-Beslist-Token', CookieHandler.getCookie('form_key') || '');
             xmlHttpRequest.send();
         }));
     };
