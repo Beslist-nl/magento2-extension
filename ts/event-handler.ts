@@ -1,4 +1,3 @@
-import { from, Observable } from 'rxjs';
 import { BeslistHandlerConfigurationInterface } from './beslist-handler-configuration.interface';
 import { CookieHandler } from './cookie-handler';
 import { EventData } from './event-data.interface';
@@ -35,8 +34,8 @@ export class EventHandler {
         this.configuration = configuration;
     }
 
-    public sendSessionStart(): Observable<number> {
-        return from(new Promise<number>((resolve, reject) => {
+    public sendSessionStart(): Promise<number> {
+        return new Promise<number>((resolve, reject) => {
             const eventData: EventData = {
                 eventName: 'session_start',
                 screenHeight: screen.height || undefined,
@@ -68,11 +67,11 @@ export class EventHandler {
             xmlHttpRequest.setRequestHeader('Content-Type', 'application/json');
             xmlHttpRequest.setRequestHeader('X-Beslist-Token', CookieHandler.getCookie('form_key') || '');
             xmlHttpRequest.send(JSON.stringify(eventData));
-        }));
+        });
     }
 
-    public sendQueuedEvents(): Observable<number> {
-        return from(new Promise<number>((resolve, reject) => {
+    public sendQueuedEvents(): Promise<number> {
+        return new Promise<number>((resolve, reject) => {
             const xmlHttpRequest = new XMLHttpRequest();
             xmlHttpRequest.onreadystatechange = function () {
                 if (xmlHttpRequest.readyState === 4) {
@@ -87,7 +86,7 @@ export class EventHandler {
             xmlHttpRequest.setRequestHeader('Content-Type', 'application/json');
             xmlHttpRequest.setRequestHeader('X-Beslist-Token', CookieHandler.getCookie('form_key') || '');
             xmlHttpRequest.send();
-        }));
+        });
     }
 
     private hasSessionIDCookie(): boolean {

@@ -1,4 +1,3 @@
-import { BehaviorSubject, combineLatest, debounceTime, map, Observable } from 'rxjs';
 import { CookieHandler } from '../cookie-handler';
 
 export type BeslistConsentType = 'necessary' | 'functional' | 'analytics' | 'performance' | 'marketing';
@@ -19,47 +18,40 @@ export interface ConsentStatusData {
     marketing?: ConsentStatus,
 }
 
+export interface ConsentData {
+    consent: ConsentStatusData;
+    handler: string;
+}
+
+type ConsentListener = (data: ConsentData) => void;
+
 export abstract class AbstractConsentHandler {
-    public currentConsent: Observable<{
-        consent: ConsentStatusData,
-        handler: string,
-    }>;
-    public currentNecessaryConsent: BehaviorSubject<ConsentStatus>;
-    public currentFunctionalConsent: BehaviorSubject<ConsentStatus>;
-    public currentAnalyticsConsent: BehaviorSubject<ConsentStatus>;
-    public currentPerformanceConsent: BehaviorSubject<ConsentStatus>;
-    public currentMarketingConsent: BehaviorSubject<ConsentStatus>;
+    private consentValues: Required<ConsentStatusData>;
+    private listeners: ConsentListener[] = [];
 
     constructor() {
         const initialConsent = this.getInitialConsent();
 
-        this.currentNecessaryConsent = new BehaviorSubject<ConsentStatus>(initialConsent.necessary || 'denied');
-        this.currentFunctionalConsent = new BehaviorSubject<ConsentStatus>(initialConsent.functional || 'denied');
-        this.currentAnalyticsConsent = new BehaviorSubject<ConsentStatus>(initialConsent.analytics || 'denied');
-        this.currentPerformanceConsent = new BehaviorSubject<ConsentStatus>(initialConsent.performance || 'denied');
-        this.currentMarketingConsent = new BehaviorSubject<ConsentStatus>(initialConsent.marketing || 'denied');
+        this.consentValues = {
+            necessary: initialConsent.necessary || 'denied',
+            functional: initialConsent.functional || 'denied',
+            analytics: initialConsent.analytics || 'denied',
+            performance: initialConsent.performance || 'denied',
+            marketing: initialConsent.marketing || 'denied',
+        };
+    }
 
-        this.currentConsent = combineLatest([
-            this.currentNecessaryConsent,
-            this.currentFunctionalConsent,
-            this.currentAnalyticsConsent,
-            this.currentPerformanceConsent,
-            this.currentMarketingConsent,
-        ]).pipe(
-            debounceTime(1),
-            map(([necessary, functional, analytics, performance, marketing]) => {
-                return {
-                    consent: {
-                        necessary: necessary,
-                        functional: functional,
-                        analytics: analytics,
-                        performance: performance,
-                        marketing: marketing,
-                    },
-                    handler: this.getConsentHandlerName(),
-                };
-            })
-        );
+    public subscribe(listener: ConsentListener): void {
+        this.listeners.push(listener);
+        this.emit();
+    }
+
+    private emit(): void {
+        const data: ConsentData = {
+            consent: {...this.consentValues},
+            handler: this.getConsentHandlerName(),
+        };
+        this.listeners.forEach(listener => listener(data));
     }
 
     public initialize(): void {
@@ -80,24 +72,26 @@ export abstract class AbstractConsentHandler {
 
     protected updateConsent(consentData: ConsentStatusData): void {
         if (consentData.necessary) {
-            this.currentNecessaryConsent.next(consentData.necessary);
+            this.consentValues.necessary = consentData.necessary;
         }
 
         if (consentData.functional) {
-            this.currentFunctionalConsent.next(consentData.functional);
+            this.consentValues.functional = consentData.functional;
         }
 
         if (consentData.analytics) {
-            this.currentAnalyticsConsent.next(consentData.analytics);
+            this.consentValues.analytics = consentData.analytics;
         }
 
         if (consentData.performance) {
-            this.currentPerformanceConsent.next(consentData.performance);
+            this.consentValues.performance = consentData.performance;
         }
 
         if (consentData.marketing) {
-            this.currentMarketingConsent.next(consentData.marketing);
+            this.consentValues.marketing = consentData.marketing;
         }
+
+        this.emit();
     }
 
     protected mapConsentType(consentType: BeslistConsentType): string {
