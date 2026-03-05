@@ -10,7 +10,9 @@ $scriptContent = <<<SCRIPT
     (function () {
         'use strict';
 
-        const url = '{$sectionUrl}' + '?sections=beslist-tracking-config&force_new_section_timestamp=true&_=' + Date.now();
+        const url = '{$sectionUrl}'
+            + '?sections=beslist-tracking-config'
+            + '&force_new_section_timestamp=true&_=' + Date.now();
 
         fetch(url, {
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
@@ -34,4 +36,4 @@ $scriptContent = <<<SCRIPT
     })();
 SCRIPT;
 ?>
-<?= $secureRenderer->renderTag('script', [], $scriptContent, false) ?>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', [], $scriptContent, false) ?>
