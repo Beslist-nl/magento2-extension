@@ -1,0 +1,21 @@
+{
+    "beslist_tracking_queued_events": {
+        "column": {
+            "id": true,
+            "event_uid": true,
+            "date_created": true,
+            "event_name": true,
+            "user_uid": true,
+            "session_uid": true,
+            "user_agent": true,
+            "language": true,
+            "screen_height": true,
+            "screen_width": true,
+            "location": true,
+            "context": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    }
+}
