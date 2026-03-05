@@ -8,7 +8,7 @@
         <section id="beslist_tracking_tracking" translate="label" type="text" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="1">
             <label>Tracking Settings</label>
             <tab>beslist_tracking</tab>
-            <resource>Beslist_BeslistTracking::config</resource>
+            <resource>Beslist_BeslistTracking::tracking_settings</resource>
 
             <group id="tracking_settings" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Tracking Settings</label>
@@ -30,7 +30,7 @@
         <section id="beslist_tracking_consent" translate="label" type="text" sortOrder="300" showInDefault="1" showInWebsite="1" showInStore="1">
             <label>Consent Settings</label>
             <tab>beslist_tracking</tab>
-            <resource>Beslist_BeslistTracking::config</resource>
+            <resource>Beslist_BeslistTracking::consent_settings</resource>
 
             <group id="consent_settings" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Consent Settings</label>
