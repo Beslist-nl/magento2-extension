@@ -17,6 +17,12 @@ class Event extends ApiController
     {
         $requestData = $this->parseRequestData();
 
+        if (!$requestData
+            || !isset($requestData['eventName'], $requestData['screenWidth'], $requestData['screenHeight'])
+        ) {
+            return $this->getErrorRestResponse('Missing required fields.');
+        }
+
         try {
             $this->eventHandler->handleEvent(
                 $requestData['eventName'],
