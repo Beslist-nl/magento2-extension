@@ -83,6 +83,23 @@ class HelperFunctions
     }
 
     /**
+     * Validates if all required consent types have been granted.
+     *
+     * @param array $consentData
+     * @return bool
+     */
+    public function isRequiredConsentGranted(array $consentData): bool
+    {
+        foreach ($consentData as $type => $status) {
+            if (in_array($type, BeslistTrackingConfiguration::REQUIRED_CONSENT_TYPES) && $status !== 'granted') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Detects the visitor's locale using the configured locale detector.
      *
      * @return string

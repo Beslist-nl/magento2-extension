@@ -179,9 +179,14 @@ class EventHandler
         }
 
         $consent = $this->helperFunctions->getConsentFromCookie();
-        if ($consent && $this->isRequiredConsentGranted($consent['consent'])) {
+        if ($consent
+            && isset($consent['consent'])
+            && $this->helperFunctions->isRequiredConsentGranted($consent['consent'])
+        ) {
             try {
-                $this->sendEvent($event);
+                if (!$this->sendEvent($event)) {
+                    $this->queueEvent($event);
+                }
             } catch (Throwable $exception) {
                 $this->logger->error('Failed to send event, queued instead.', [
                     'exception' => $exception,
@@ -196,14 +201,59 @@ class EventHandler
     }
 
     /**
-     * Processes and sends all queued events for the current user, if the required consent is granted.
-     *
+     * @param string $userID
+     * @param string $sessionID
+     * @param string|null $hashedVisitorIP
+     * @param float $value
+     * @param string $transactionID
+     * @param bool $includingVat
+     * @return bool True when the conversion has been handed off - either sent or queued.
+     * @throws LocalizedException
+     */
+    public function sendConversionForOrder(
+        string  $userID,
+        string  $sessionID,
+        ?string $hashedVisitorIP,
+        float   $value,
+        string  $transactionID,
+        bool    $includingVat = true
+    ): bool {
+        $advertiserID = $this->settingsHelper->getAdvertiserID();
+
+        if (!$advertiserID) {
+            throw new LocalizedException(__('Advertiser ID is not set.'));
+        }
+
+        $event = $this->eventFactory->createConversion(
+            $advertiserID,
+            $userID,
+            $sessionID,
+            $value,
+            $transactionID,
+            $includingVat
+        );
+
+        $event->context->setServerSideUserIP($hashedVisitorIP);
+
+        if ($this->sendEvent($event)) {
+            return true;
+        }
+
+        $this->queueEvent($event);
+
+        return true;
+    }
+
+    /**
      * @throws Exception
      */
     public function handleQueuedEvents(): array
     {
         $consent = $this->helperFunctions->getConsentFromCookie();
-        if (!$consent || !$this->isRequiredConsentGranted($consent['consent'])) {
+        if (!$consent
+            || !isset($consent['consent'])
+            || !$this->helperFunctions->isRequiredConsentGranted($consent['consent'])
+        ) {
             return [];
         }
 
@@ -222,8 +272,9 @@ class EventHandler
         $queuedEvents = $this->getQueuedEvents($userID);
         foreach ($queuedEvents as $queuedEvent) {
             try {
-                $this->sendEvent($queuedEvent);
-                $this->deleteQueuedEvent($queuedEvent);
+                if ($this->sendEvent($queuedEvent)) {
+                    $this->deleteQueuedEvent($queuedEvent);
+                }
             } catch (Throwable $exception) {
                 $this->logger->error('Failed to send queued event', [
                     'event_id' => $queuedEvent->getEventID(),
@@ -304,28 +355,12 @@ class EventHandler
     }
 
     /**
-     * Validates if all required consent types have been granted.
-     *
-     * @param array $consentData
-     * @return bool
-     */
-    private function isRequiredConsentGranted(array $consentData): bool
-    {
-        foreach ($consentData as $type => $status) {
-            if (in_array($type, BeslistTrackingConfiguration::REQUIRED_CONSENT_TYPES) && $status !== 'granted') {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
      * Sends a single event to the Beslist endpoint.
      *
      * @param AbstractEvent $event
-     * @return void
+     * @return bool True when the endpoint accepted the event.
      */
-    private function sendEvent(AbstractEvent $event): void
+    private function sendEvent(AbstractEvent $event): bool
     {
         try {
             $this->curl->setHeaders(['Content-Type' => 'application/json']);
@@ -338,10 +373,14 @@ class EventHandler
             $status = $this->curl->getStatus();
             if ($status !== 200) {
                 $this->logger->warning("Failed to send event. HTTP Status: $status. Body: " . $this->curl->getBody());
+                return false;
             }
         } catch (Exception $e) {
             $this->logger->error('Error while sending event: ' . $e->getMessage());
+            return false;
         }
+
+        return true;
     }
 
     /**
