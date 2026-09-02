@@ -4,6 +4,8 @@ namespace Beslist\BeslistTracking\Observer;
 
 use Beslist\BeslistTracking\Helper\SettingsHelper;
 use Beslist\BeslistTracking\src\Helper\HelperFunctions;
+use Magento\Framework\App\Area;
+use Magento\Framework\App\State;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Sales\Model\Order;
@@ -22,20 +24,25 @@ class PersistTrackingDataObserver implements ObserverInterface
     private SettingsHelper $settingsHelper;
     /** @var HelperFunctions */
     private HelperFunctions $helper;
+    /** @var State */
+    private State $appState;
 
     /**
      * @param LoggerInterface $logger
      * @param SettingsHelper $settingsHelper
      * @param HelperFunctions $helper
+     * @param State $appState
      */
     public function __construct(
         LoggerInterface $logger,
         SettingsHelper  $settingsHelper,
-        HelperFunctions $helper
+        HelperFunctions $helper,
+        State           $appState
     ) {
         $this->logger = $logger;
         $this->settingsHelper = $settingsHelper;
         $this->helper = $helper;
+        $this->appState = $appState;
     }
 
     /**
@@ -48,6 +55,10 @@ class PersistTrackingDataObserver implements ObserverInterface
     {
         try {
             if (!$this->settingsHelper->isTrackingEnabled()) {
+                return;
+            }
+
+            if ($this->isAdminRequest()) {
                 return;
             }
 
@@ -77,6 +88,25 @@ class PersistTrackingDataObserver implements ObserverInterface
             $this->logger->error('Failed to capture Beslist tracking data on order placement', [
                 'exception' => $e,
             ]);
+        }
+    }
+
+    /**
+     * Whether the order is being placed from the admin panel.
+     *
+     * Only adminhtml is excluded: the cookies on such a request belong to the operator
+     * rather than the customer. Allow-listing frontend instead would drop storefront
+     * orders, which are placed in webapi_rest. An unresolvable area still captures --
+     * the cookie check below is the real gate.
+     *
+     * @return bool
+     */
+    private function isAdminRequest(): bool
+    {
+        try {
+            return $this->appState->getAreaCode() === Area::AREA_ADMINHTML;
+        } catch (Throwable $e) {
+            return false;
         }
     }
 }

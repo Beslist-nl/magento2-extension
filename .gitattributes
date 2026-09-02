@@ -1,0 +1,2 @@
+# Keep automated tests in the repository, but out of distributed packages.
+/Test export-ignore

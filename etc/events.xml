@@ -1,5 +1,8 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <!-- Global on purpose: order placement runs in webapi_rest (graphql when headless),
+         and the paid state is reached in adminhtml, crontab or webapi_rest. Scoping
+         either observer to an area silently drops the events it fires outside it. -->
     <event name="sales_order_place_after">
         <observer name="Beslist_BeslistTracking_PersistTrackingData" instance="Beslist\BeslistTracking\Observer\PersistTrackingDataObserver" />
     </event>

@@ -37,6 +37,7 @@ jobs:
           zip -X -r build/Beslist_BeslistTracking-${{ env.RELEASE_VERSION }}.zip . \
           -x "node_modules/*" "vendor/*" "*.git*" ".idea/*" ".vscode/*" \
             "composer.lock" "webpack.config.js" "tsconfig.json" "ts/*" "package.json" "package-lock.json" \
+            "Test/*" \
             "*.DS_Store" "README.md" "*.zip" "build/*"
 
       - name: Upload ZIP as artifact
