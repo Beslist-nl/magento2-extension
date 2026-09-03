@@ -204,6 +204,8 @@ class EventHandler
      * @param string $userID
      * @param string $sessionID
      * @param string|null $hashedVisitorIP
+     * @param string|null $userAgent
+     * @param string|null $language
      * @param float $value
      * @param string $transactionID
      * @param bool $includingVat
@@ -214,6 +216,8 @@ class EventHandler
         string  $userID,
         string  $sessionID,
         ?string $hashedVisitorIP,
+        ?string $userAgent,
+        ?string $language,
         float   $value,
         string  $transactionID,
         bool    $includingVat = true
@@ -235,6 +239,12 @@ class EventHandler
 
         $event->context->setServerSideUserIP($hashedVisitorIP);
 
+        // Replace unconditionally. The factory reads these from the current request,
+        // which for a payment webhook belongs to the provider and for an admin action to
+        // the operator - so an empty captured value is still more honest than that one.
+        $event->setUserAgent((string) $userAgent);
+        $event->setLanguage($language);
+
         if ($this->sendEvent($event)) {
             return true;
         }
@@ -245,6 +255,9 @@ class EventHandler
     }
 
     /**
+     * Flushes the events queued for the current visitor, once their consent allows it.
+     *
+     * @return array
      * @throws Exception
      */
     public function handleQueuedEvents(): array
@@ -363,7 +376,15 @@ class EventHandler
     private function sendEvent(AbstractEvent $event): bool
     {
         try {
-            $this->curl->setHeaders(['Content-Type' => 'application/json']);
+            $headers = ['Content-Type' => 'application/json'];
+
+            // The endpoint reads the user agent from the request header and overwrites
+            // whatever the payload carries, so it has to travel as a header.
+            if ($event->getUserAgent() !== '') {
+                $headers['User-Agent'] = $event->getUserAgent();
+            }
+
+            $this->curl->setHeaders($headers);
             $this->curl->setTimeout(20);
             $this->curl->post(
                 BeslistTrackingConfiguration::BESLIST_ENDPOINT_URL,

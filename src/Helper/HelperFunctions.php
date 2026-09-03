@@ -116,13 +116,15 @@ class HelperFunctions
     }
 
     /**
-     * Retrieves the user agent.
+     * Retrieves the user agent
      *
      * @return string
      */
     public function getUserAgent(): string
     {
-        return $this->request->getServer('HTTP_USER_AGENT') ?? '';
+        $userAgent = $this->request->getServer('HTTP_USER_AGENT') ?? '';
+
+        return mb_substr($userAgent, 0, BeslistTrackingConfiguration::USER_AGENT_MAX_LENGTH);
     }
 
     /**
@@ -135,6 +137,12 @@ class HelperFunctions
         $ip = $this->request->getClientIp();
 
         if (!$ip) {
+            return null;
+        }
+
+        $ip = trim(explode(',', $ip)[0]);
+
+        if ($ip === '') {
             return null;
         }
 

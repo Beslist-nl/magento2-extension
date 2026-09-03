@@ -6,7 +6,11 @@ use Beslist\BeslistTracking\Api\EventQueueRepositoryInterface;
 use Beslist\BeslistTracking\Observer\ConversionObserver;
 use Beslist\BeslistTracking\src\BeslistTrackingConfiguration;
 use Beslist\BeslistTracking\src\EventHandler;
+use Beslist\BeslistTracking\src\Helper\HelperFunctions;
 use Beslist\BeslistTracking\Test\Integration\Stub\CurlStub;
+use Laminas\Stdlib\Parameters;
+use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\App\Request\Http;
 use Magento\Framework\HTTP\Client\Curl;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order;
@@ -33,6 +37,8 @@ class ConversionObserverTest extends TestCase
     private const USER_ID = 'test-user-id';
     /** Hashed IPs are SHA-256, so use something of the right shape. */
     private const VISITOR_IP = '6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b';
+    private const USER_AGENT = 'Mozilla/5.0 (Test) AppleWebKit/537.36 Chrome/140.0.0.0 Safari/537.36';
+    private const LANGUAGE = 'nl-NL';
 
     /** @var ObjectManager */
     private $objectManager;
@@ -112,6 +118,16 @@ class ConversionObserverTest extends TestCase
         $this->assertSame(self::SESSION_ID, $payload['client_bslst_sid']);
         $this->assertSame(self::USER_ID, $payload['client_bslst_uid']);
         $this->assertSame(self::VISITOR_IP, $payload['context']['server_side_user_ip']);
+
+        // The receiver overwrites the payload's user agent from the request header, so
+        // the captured value only survives if it is sent as a header.
+        $this->assertSame(
+            self::USER_AGENT,
+            $this->curl->getRequestHeaders()['User-Agent'] ?? null,
+            'The captured user agent must be sent as a request header, not only in the payload.'
+        );
+        $this->assertSame(self::USER_AGENT, $payload['user_agent']);
+        $this->assertSame(self::LANGUAGE, $payload['language']);
 
         $this->assertSame(
             1,
@@ -222,6 +238,59 @@ class ConversionObserverTest extends TestCase
      *
      * @return void
      */
+    /**
+     * The user agent arrives in a request header a client controls, with no length limit, and is
+     * stored in two columns - the order and the narrower event queue. It is therefore clamped on
+     * read, so no write site can be handed a value that does not fit. Magento's own connection
+     * reports an empty sql_mode and would trim silently, but a shop running in strict mode would
+     * reject the insert instead - mid-checkout for the order, and losing the event for the queue.
+     */
+    public function testClampsAnOversizedUserAgentOnRead(): void
+    {
+        $request = $this->objectManager->create(Http::class);
+        $request->setServer(new Parameters(['HTTP_USER_AGENT' => str_repeat('U', 300)]));
+
+        $helper = $this->objectManager->create(HelperFunctions::class, ['request' => $request]);
+
+        $this->assertSame(
+            BeslistTrackingConfiguration::USER_AGENT_MAX_LENGTH,
+            mb_strlen($helper->getUserAgent()),
+            'An oversized user agent must be clamped to the stored column width on read.'
+        );
+    }
+
+    /**
+     * Guards the clamp against the schema drifting away from it. sales_order.beslist_user_agent was
+     * introduced at 255 while the pre-existing queue column is 250, so a 251-255 character agent
+     * passed the order write and could still overflow the queue. Fails if either column is
+     * narrowed, or if the clamp is raised past what a column can hold.
+     */
+    public function testUserAgentClampFitsEveryColumnItIsStoredIn(): void
+    {
+        $resource = $this->objectManager->get(ResourceConnection::class);
+        $connection = $resource->getConnection();
+
+        $columns = [
+            [$resource->getTableName('sales_order'), 'beslist_user_agent'],
+            [$resource->getTableName(BeslistTrackingConfiguration::EVENT_QUEUE_TABLE_NAME), 'user_agent'],
+        ];
+
+        foreach ($columns as [$table, $column]) {
+            $described = $connection->describeTable($table);
+
+            $this->assertArrayHasKey($column, $described, sprintf('%s.%s is missing.', $table, $column));
+            $this->assertGreaterThanOrEqual(
+                BeslistTrackingConfiguration::USER_AGENT_MAX_LENGTH,
+                (int) $described[$column]['LENGTH'],
+                sprintf(
+                    '%s.%s is narrower than the clamp, so a clamped value can still overflow it.',
+                    $table,
+                    $column
+                )
+            );
+        }
+    }
+
     private function forgetTrackingInstances(): void
     {
         $this->objectManager->removeSharedInstance(EventHandler::class);
@@ -253,6 +322,8 @@ class ConversionObserverTest extends TestCase
             $order->setData('beslist_session_id', self::SESSION_ID);
             $order->setData('beslist_user_id', self::USER_ID);
             $order->setData('beslist_visitor_ip', self::VISITOR_IP);
+            $order->setData('beslist_user_agent', self::USER_AGENT);
+            $order->setData('beslist_language', self::LANGUAGE);
         }
 
         $order->setState($state)

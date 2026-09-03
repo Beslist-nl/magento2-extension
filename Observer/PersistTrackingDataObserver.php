@@ -3,6 +3,7 @@
 namespace Beslist\BeslistTracking\Observer;
 
 use Beslist\BeslistTracking\Helper\SettingsHelper;
+use Beslist\BeslistTracking\src\BeslistTrackingConfiguration;
 use Beslist\BeslistTracking\src\Helper\HelperFunctions;
 use Magento\Framework\App\Area;
 use Magento\Framework\App\State;
@@ -84,6 +85,11 @@ class PersistTrackingDataObserver implements ObserverInterface
             $order->setData('beslist_session_id', $sessionID);
             $order->setData('beslist_user_id', $this->helper->getUserIDFromCookie());
             $order->setData('beslist_visitor_ip', $this->helper->getHashedVisitorIP());
+            $order->setData(
+                'beslist_user_agent',
+                mb_substr($this->helper->getUserAgent(), 0, BeslistTrackingConfiguration::USER_AGENT_MAX_LENGTH)
+            );
+            $order->setData('beslist_language', mb_substr($this->helper->getVisitorLocale(), 0, 32));
         } catch (Throwable $e) {
             $this->logger->error('Failed to capture Beslist tracking data on order placement', [
                 'exception' => $e,

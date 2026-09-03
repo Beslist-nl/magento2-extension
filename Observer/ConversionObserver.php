@@ -46,6 +46,8 @@ class ConversionObserver implements ObserverInterface
     }
 
     /**
+     * Reports the conversion once the order has reached a paid state, at most once per order.
+     *
      * @param Observer $observer
      * @return void
      */
@@ -79,6 +81,8 @@ class ConversionObserver implements ObserverInterface
                 (string) ($order->getData('beslist_user_id') ?? ''),
                 (string) $sessionID,
                 $order->getData('beslist_visitor_ip'),
+                $order->getData('beslist_user_agent'),
+                $order->getData('beslist_language'),
                 (float) $order->getGrandTotal(),
                 (string) $order->getIncrementId(),
                 true

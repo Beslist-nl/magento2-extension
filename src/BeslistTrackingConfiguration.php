@@ -29,6 +29,7 @@ class BeslistTrackingConfiguration
     public const USER_ID_COOKIE_LIFETIME = 46656000; // 540 days
     public const EVENT_QUEUE_TABLE_NAME = 'beslist_tracking_queued_events';
     public const QUEUED_EVENT_MAX_AGE_MODIFIER = '-1 month';
+    public const USER_AGENT_MAX_LENGTH = 250;
     public const CONSENT_TYPE_NECESSARY = 'necessary';
     public const CONSENT_TYPE_FUNCTIONAL = 'functional';
     public const CONSENT_TYPE_ANALYTICS = 'analytics';

@@ -16,8 +16,11 @@ use OutOfBoundsException;
  */
 class CurlStub extends Curl
 {
-    /** @var array<int, array{uri: string, body: string}> */
+    /** @var array<int, array{uri: string, body: string, headers: array}> */
     private array $requests = [];
+
+    /** @var array */
+    private array $headers = [];
 
     /** @var int */
     private int $responseStatus = 200;
@@ -37,6 +40,7 @@ class CurlStub extends Curl
      */
     public function setHeaders($headers)
     {
+        $this->headers = $headers;
     }
 
     /**
@@ -51,7 +55,7 @@ class CurlStub extends Curl
      */
     public function post($uri, $params)
     {
-        $this->requests[] = ['uri' => $uri, 'body' => $params];
+        $this->requests[] = ['uri' => $uri, 'body' => $params, 'headers' => $this->headers];
     }
 
     /**
@@ -101,6 +105,21 @@ class CurlStub extends Curl
     public function getRequests(): array
     {
         return $this->requests;
+    }
+
+    /**
+     * The headers sent with a recorded request.
+     *
+     * @param int $index
+     * @return array
+     */
+    public function getRequestHeaders(int $index = 0): array
+    {
+        if (!isset($this->requests[$index])) {
+            throw new OutOfBoundsException(sprintf('No request was recorded at index %d.', $index));
+        }
+
+        return $this->requests[$index]['headers'];
     }
 
     /**

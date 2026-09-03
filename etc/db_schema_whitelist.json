@@ -23,7 +23,9 @@
             "beslist_session_id": true,
             "beslist_user_id": true,
             "beslist_visitor_ip": true,
-            "beslist_conversion_sent": true
+            "beslist_conversion_sent": true,
+            "beslist_user_agent": true,
+            "beslist_language": true
         }
     }
 }
