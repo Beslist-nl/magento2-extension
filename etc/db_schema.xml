@@ -23,6 +23,7 @@
         <column name="beslist_visitor_ip" xsi:type="varchar" length="64" nullable="true" comment="SHA-256 hash of the visitor IP captured at order placement"/>
         <column name="beslist_user_agent" xsi:type="varchar" length="250" nullable="true" comment="User agent captured at order placement"/>
         <column name="beslist_language" xsi:type="varchar" length="32" nullable="true" comment="Visitor locale captured at order placement"/>
+        <column name="beslist_referrer" xsi:type="varchar" length="512" nullable="true" comment="Referring URL captured at order placement"/>
         <column name="beslist_conversion_sent" xsi:type="smallint" padding="5" unsigned="true" nullable="false" default="0" comment="Whether the Beslist conversion event has been reported"/>
     </table>
 </schema>

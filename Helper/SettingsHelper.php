@@ -3,8 +3,10 @@
 namespace Beslist\BeslistTracking\Helper;
 
 use Beslist\BeslistTracking\src\Consent\CustomConsentManagementPlatform;
+use Laminas\Uri\UriFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Model\ScopeInterface;
+use Throwable;
 
 class SettingsHelper
 {
@@ -46,6 +48,31 @@ class SettingsHelper
             'beslist_tracking_tracking/tracking_settings/advertiser_id',
             ScopeInterface::SCOPE_STORE
         );
+    }
+
+    /**
+     * Retrieves the canonical host of a store from its configured base URL.
+     *
+     * @param int|null $storeId
+     * @return string|null
+     */
+    public function getStoreHost(?int $storeId = null): ?string
+    {
+        $baseUrl = $this->scopeConfig->getValue(
+            'web/secure/base_url',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+
+        if (!$baseUrl) {
+            return null;
+        }
+
+        try {
+            return UriFactory::factory($baseUrl)->getHost() ?: null;
+        } catch (Throwable $e) {
+            return null;
+        }
     }
 
     /**

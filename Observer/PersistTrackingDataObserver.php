@@ -90,6 +90,10 @@ class PersistTrackingDataObserver implements ObserverInterface
                 mb_substr($this->helper->getUserAgent(), 0, BeslistTrackingConfiguration::USER_AGENT_MAX_LENGTH)
             );
             $order->setData('beslist_language', mb_substr($this->helper->getVisitorLocale(), 0, 32));
+            $order->setData(
+                'beslist_referrer',
+                mb_substr($this->helper->getReferrer(), 0, BeslistTrackingConfiguration::REFERRER_MAX_LENGTH)
+            );
         } catch (Throwable $e) {
             $this->logger->error('Failed to capture Beslist tracking data on order placement', [
                 'exception' => $e,

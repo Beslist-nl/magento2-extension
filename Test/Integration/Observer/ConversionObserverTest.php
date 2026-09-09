@@ -39,6 +39,7 @@ class ConversionObserverTest extends TestCase
     private const VISITOR_IP = '6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b';
     private const USER_AGENT = 'Mozilla/5.0 (Test) AppleWebKit/537.36 Chrome/140.0.0.0 Safari/537.36';
     private const LANGUAGE = 'nl-NL';
+    private const REFERRER = 'https://shop.example.com/checkout/';
 
     /** @var ObjectManager */
     private $objectManager;
@@ -233,11 +234,46 @@ class ConversionObserverTest extends TestCase
     }
 
     /**
-     * Drops the shared instances holding the HTTP client, so the event handler
-     * and the observer are rebuilt around the stub.
-     *
-     * @return void
+     * @magentoDataFixture Magento/Sales/_files/order.php
+     * @magentoConfigFixture current_store beslist_tracking_tracking/tracking_settings/enable_tracking 1
+     * @magentoConfigFixture current_store beslist_tracking_tracking/tracking_settings/advertiser_id 4321
+     * @magentoConfigFixture current_store web/secure/base_url https://shop.example.com/
      */
+    public function testReportsTheShopsOwnHostRatherThanTheConfirmingRequestsHost(): void
+    {
+        $this->saveOrderInState(Order::STATE_PENDING_PAYMENT, true);
+        $this->saveOrderInState(Order::STATE_PROCESSING);
+
+        $this->assertSame(1, $this->curl->getRequestCount(), 'The conversion must have been sent.');
+
+        $this->assertSame(
+            'shop.example.com',
+            $this->curl->getDecodedRequest()['location']['host'] ?? null,
+            'The conversion must report the shop host from configuration, not the confirming request.'
+        );
+    }
+
+    /**
+     * The confirming request's path and query carry admin secret keys and callback tokens, so only
+     * the referrer captured at placement is reported.
+     *
+     * @magentoDataFixture Magento/Sales/_files/order.php
+     * @magentoConfigFixture current_store beslist_tracking_tracking/tracking_settings/enable_tracking 1
+     * @magentoConfigFixture current_store beslist_tracking_tracking/tracking_settings/advertiser_id 4321
+     * @magentoConfigFixture current_store web/secure/base_url https://shop.example.com/
+     */
+    public function testReportsThePlacementReferrerAndOmitsTheConfirmingRequestsPath(): void
+    {
+        $this->saveOrderInState(Order::STATE_PENDING_PAYMENT, true);
+        $this->saveOrderInState(Order::STATE_PROCESSING);
+
+        $location = $this->curl->getDecodedRequest()['location'] ?? [];
+
+        $this->assertSame(self::REFERRER, $location['referrer'] ?? null, 'The captured referrer must be reported.');
+        $this->assertSame('', $location['path'] ?? null, 'The confirming request path must not be reported.');
+        $this->assertSame('', $location['query'] ?? null, 'The confirming request query must not be reported.');
+    }
+
     /**
      * The user agent arrives in a request header a client controls, with no length limit, and is
      * stored in two columns - the order and the narrower event queue. It is therefore clamped on
@@ -291,6 +327,12 @@ class ConversionObserverTest extends TestCase
         }
     }
 
+    /**
+     * Drops the shared instances holding the HTTP client, so the event handler
+     * and the observer are rebuilt around the stub.
+     *
+     * @return void
+     */
     private function forgetTrackingInstances(): void
     {
         $this->objectManager->removeSharedInstance(EventHandler::class);
@@ -324,6 +366,7 @@ class ConversionObserverTest extends TestCase
             $order->setData('beslist_visitor_ip', self::VISITOR_IP);
             $order->setData('beslist_user_agent', self::USER_AGENT);
             $order->setData('beslist_language', self::LANGUAGE);
+            $order->setData('beslist_referrer', self::REFERRER);
         }
 
         $order->setState($state)

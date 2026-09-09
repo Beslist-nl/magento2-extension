@@ -83,9 +83,11 @@ class ConversionObserver implements ObserverInterface
                 $order->getData('beslist_visitor_ip'),
                 $order->getData('beslist_user_agent'),
                 $order->getData('beslist_language'),
+                $order->getData('beslist_referrer'),
                 (float) $order->getGrandTotal(),
                 (string) $order->getIncrementId(),
-                true
+                true,
+                $order->getStoreId() === null ? null : (int) $order->getStoreId()
             );
 
             if ($sent) {

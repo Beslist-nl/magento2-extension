@@ -116,6 +116,16 @@ class HelperFunctions
     }
 
     /**
+     * Retrieves the referring URL of the current request
+     *
+     * @return string
+     */
+    public function getReferrer(): string
+    {
+        return $this->request->getServer('HTTP_REFERER') ?? '';
+    }
+
+    /**
      * Retrieves the user agent
      *
      * @return string

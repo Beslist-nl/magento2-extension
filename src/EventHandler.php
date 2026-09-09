@@ -201,14 +201,20 @@ class EventHandler
     }
 
     /**
+     * Sends a conversion from values captured when the order was placed.
+     *
+     * The request that confirms payment is usually a webhook, with no cookies and no customer.
+     *
      * @param string $userID
      * @param string $sessionID
      * @param string|null $hashedVisitorIP
      * @param string|null $userAgent
      * @param string|null $language
+     * @param string|null $referrer
      * @param float $value
      * @param string $transactionID
      * @param bool $includingVat
+     * @param int|null $storeId Store the order belongs to, used to report the shop's own host.
      * @return bool True when the conversion has been handed off - either sent or queued.
      * @throws LocalizedException
      */
@@ -218,9 +224,11 @@ class EventHandler
         ?string $hashedVisitorIP,
         ?string $userAgent,
         ?string $language,
+        ?string $referrer,
         float   $value,
         string  $transactionID,
-        bool    $includingVat = true
+        bool    $includingVat = true,
+        ?int    $storeId = null
     ): bool {
         $advertiserID = $this->settingsHelper->getAdvertiserID();
 
@@ -244,6 +252,19 @@ class EventHandler
         // the operator - so an empty captured value is still more honest than that one.
         $event->setUserAgent((string) $userAgent);
         $event->setLanguage($language);
+
+        // The factory fills the location from the request that confirmed payment - a webhook or
+        // an admin action - whose path and query carry admin secret keys and callback tokens.
+        $storeHost = $this->settingsHelper->getStoreHost($storeId);
+        if ($storeHost) {
+            $event->location->setProtocol('https:');
+            $event->location->setHost($storeHost);
+        }
+
+        $event->location->setReferrer((string) $referrer);
+        $event->location->setPath('');
+        $event->location->setQuery('');
+        $event->location->setHash('');
 
         if ($this->sendEvent($event)) {
             return true;
