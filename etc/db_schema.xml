@@ -26,5 +26,6 @@
         <column name="beslist_host" xsi:type="varchar" length="255" nullable="true" comment="Host captured at order placement"/>
         <column name="beslist_referrer" xsi:type="varchar" length="512" nullable="true" comment="Referring URL captured at order placement"/>
         <column name="beslist_conversion_sent" xsi:type="smallint" padding="5" unsigned="true" nullable="false" default="0" comment="Whether the Beslist conversion event has been reported"/>
+        <column name="beslist_conversion_attempts" xsi:type="smallint" padding="5" unsigned="true" nullable="false" default="0" comment="Failed attempts to report the Beslist conversion"/>
     </table>
 </schema>

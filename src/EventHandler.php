@@ -101,6 +101,10 @@ class EventHandler
         ?string $sessionID = null,
         ?string $userID = null
     ): AbstractEvent {
+        if (!$this->settingsHelper->isTrackingEnabled()) {
+            throw new LocalizedException(__('Tracking is disabled.'));
+        }
+
         $advertiserID = $this->settingsHelper->getAdvertiserID();
 
         if (!$advertiserID) {
@@ -216,7 +220,7 @@ class EventHandler
      * @param string $transactionID
      * @param bool $includingVat
      * @param int|null $storeId Store the order belongs to, used to report the shop's own host.
-     * @return bool True when the conversion has been handed off - either sent or queued.
+     * @return bool True when the endpoint accepted the conversion.
      * @throws LocalizedException
      */
     public function sendConversionForOrder(
@@ -268,13 +272,10 @@ class EventHandler
         $event->location->setQuery('');
         $event->location->setHash('');
 
-        if ($this->sendEvent($event)) {
-            return true;
-        }
-
-        $this->queueEvent($event);
-
-        return true;
+        // Not queued on failure: the queue is only ever flushed by a returning customer, which
+        // for a bank transfer settled days later never happens. The order is retried instead, on
+        // its own next save.
+        return $this->sendEvent($event);
     }
 
     /**
@@ -285,6 +286,10 @@ class EventHandler
      */
     public function handleQueuedEvents(): array
     {
+        if (!$this->settingsHelper->isTrackingEnabled()) {
+            return [];
+        }
+
         $consent = $this->helperFunctions->getConsentFromCookie();
         if (!$consent
             || !isset($consent['consent'])

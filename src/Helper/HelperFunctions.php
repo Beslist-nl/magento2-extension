@@ -90,8 +90,8 @@ class HelperFunctions
      */
     public function isRequiredConsentGranted(array $consentData): bool
     {
-        foreach ($consentData as $type => $status) {
-            if (in_array($type, BeslistTrackingConfiguration::REQUIRED_CONSENT_TYPES) && $status !== 'granted') {
+        foreach (BeslistTrackingConfiguration::REQUIRED_CONSENT_TYPES as $requiredType) {
+            if (($consentData[$requiredType] ?? null) !== 'granted') {
                 return false;
             }
         }

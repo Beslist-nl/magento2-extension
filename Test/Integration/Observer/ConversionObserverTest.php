@@ -158,8 +158,10 @@ class ConversionObserverTest extends TestCase
         $this->saveOrderInState(Order::STATE_PROCESSING);
         $this->assertSame(1, $this->curl->getRequestCount());
 
+        // A real field change: adding status history alone leaves the order itself unchanged, so
+        // AbstractDb::save() returns early and sales_order_save_after never fires.
         $order = $this->loadOrder();
-        $order->addCommentToStatusHistory('Second save, as a replayed payment webhook would cause.');
+        $order->setCustomerNote('Second save, as a replayed payment webhook would cause.');
         $this->orderRepository->save($order);
 
         $this->assertSame(
@@ -203,7 +205,7 @@ class ConversionObserverTest extends TestCase
      * @magentoConfigFixture current_store beslist_tracking_tracking/tracking_settings/enable_tracking 1
      * @magentoConfigFixture current_store beslist_tracking_tracking/tracking_settings/advertiser_id 4321
      */
-    public function testQueuesConversionWhenTheEndpointRejectsIt(): void
+    public function testARejectedConversionIsRetriedRatherThanQueued(): void
     {
         $this->curl->setResponseStatus(500, 'Internal Server Error');
 
@@ -214,14 +216,45 @@ class ConversionObserverTest extends TestCase
 
         $queue = $this->objectManager->get(EventQueueRepositoryInterface::class);
         $this->assertSame(
-            1,
+            0,
             $queue->getEventCount(self::USER_ID),
-            'A rejected conversion must be queued instead of dropped.'
+            'The queue is only flushed by a returning customer, so a conversion must not rely on it.'
         );
+
+        $order = $this->loadOrder();
         $this->assertSame(
-            1,
-            (int) $this->loadOrder()->getData('beslist_conversion_sent'),
-            'A queued conversion counts as handed off, so the order must not be reported again.'
+            0,
+            (int) $order->getData('beslist_conversion_sent'),
+            'A rejected conversion must stay unflagged so the next order save retries it.'
+        );
+        $this->assertSame(1, (int) $order->getData('beslist_conversion_attempts'), 'The attempt must be recorded.');
+    }
+
+    /**
+     * Retrying on every later save would mean a permanently rejected conversion costing a timeout
+     * on each admin action touching that order.
+     *
+     * @magentoDataFixture Magento/Sales/_files/order.php
+     * @magentoConfigFixture current_store beslist_tracking_tracking/tracking_settings/enable_tracking 1
+     * @magentoConfigFixture current_store beslist_tracking_tracking/tracking_settings/advertiser_id 4321
+     */
+    public function testStopsRetryingAtTheAttemptCeiling(): void
+    {
+        $this->curl->setResponseStatus(500, 'Internal Server Error');
+
+        $this->saveOrderInState(Order::STATE_PENDING_PAYMENT, true);
+        $this->saveOrderInState(Order::STATE_PROCESSING);
+
+        for ($i = 0; $i < BeslistTrackingConfiguration::MAX_CONVERSION_ATTEMPTS + 2; $i++) {
+            $order = $this->loadOrder();
+            $order->setCustomerNote('Later save ' . $i);
+            $this->orderRepository->save($order);
+        }
+
+        $this->assertSame(
+            BeslistTrackingConfiguration::MAX_CONVERSION_ATTEMPTS,
+            $this->curl->getRequestCount(),
+            'Retries must stop at the ceiling rather than continuing on every save.'
         );
     }
 
@@ -367,6 +400,18 @@ class ConversionObserverTest extends TestCase
                 )
             );
         }
+    }
+
+    /**
+     * Disabling tracking has to hold on the server too, not only in the JS that normally calls it.
+     *
+     * @magentoConfigFixture current_store beslist_tracking_tracking/tracking_settings/enable_tracking 0
+     * @magentoConfigFixture current_store beslist_tracking_tracking/tracking_settings/advertiser_id 4321
+     */
+    public function testQueuedEventsAreNotFlushedWhileTrackingIsDisabled(): void
+    {
+        $this->assertSame([], $this->objectManager->get(EventHandler::class)->handleQueuedEvents());
+        $this->assertSame(0, $this->curl->getRequestCount(), 'Disabled tracking must send nothing.');
     }
 
     /**

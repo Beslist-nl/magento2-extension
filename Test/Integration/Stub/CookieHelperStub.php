@@ -17,6 +17,9 @@ class CookieHelperStub extends HelperFunctions
     public const USER_ID = 'area-test-user-id';
     public const VISITOR_IP = '6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b';
 
+    /** @var array|null */
+    private $consent = ['consent' => ['marketing' => 'granted'], 'handler' => 'cookie-law-info'];
+
     /**
      * @inheritDoc
      */
@@ -38,10 +41,18 @@ class CookieHelperStub extends HelperFunctions
      */
     public function getConsentFromCookie(): ?array
     {
-        return [
-            'consent' => ['marketing' => 'granted'],
-            'handler' => 'cookie-law-info',
-        ];
+        return $this->consent;
+    }
+
+    /**
+     * Replaces the consent payload the stub reports.
+     *
+     * @param array|null $consent
+     * @return void
+     */
+    public function setConsent(?array $consent): void
+    {
+        $this->consent = $consent;
     }
 
     /**

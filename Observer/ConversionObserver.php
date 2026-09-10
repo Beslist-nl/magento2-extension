@@ -3,6 +3,7 @@
 namespace Beslist\BeslistTracking\Observer;
 
 use Beslist\BeslistTracking\Helper\SettingsHelper;
+use Beslist\BeslistTracking\src\BeslistTrackingConfiguration;
 use Beslist\BeslistTracking\src\EventHandler;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
@@ -91,6 +92,11 @@ class ConversionObserver implements ObserverInterface
                 return;
             }
 
+            $attempts = (int) $order->getData('beslist_conversion_attempts');
+            if ($attempts >= BeslistTrackingConfiguration::MAX_CONVERSION_ATTEMPTS) {
+                return;
+            }
+
             $sessionID = $order->getData('beslist_session_id');
             if (!$sessionID) {
                 return;
@@ -114,10 +120,15 @@ class ConversionObserver implements ObserverInterface
                 $order->getStoreId() === null ? null : (int) $order->getStoreId()
             );
 
-            if ($sent) {
-                $order->setData('beslist_conversion_sent', 1);
-                $this->orderResource->saveAttribute($order, 'beslist_conversion_sent');
+            if (!$sent) {
+                $order->setData('beslist_conversion_attempts', $attempts + 1);
+                $this->orderResource->saveAttribute($order, 'beslist_conversion_attempts');
+
+                return;
             }
+
+            $order->setData('beslist_conversion_sent', 1);
+            $this->orderResource->saveAttribute($order, 'beslist_conversion_sent');
         } catch (Throwable $e) {
             $this->logger->error('Failed to send Beslist conversion on order save', [
                 'exception' => $e,

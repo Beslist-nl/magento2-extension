@@ -41,6 +41,8 @@ class PersistTrackingDataObserverAreaTest extends TestCase
 
     /** @var \Magento\TestFramework\ObjectManager */
     private $objectManager;
+    /** @var CookieHelperStub */
+    private $helper;
 
     protected function setUp(): void
     {
@@ -57,10 +59,8 @@ class PersistTrackingDataObserverAreaTest extends TestCase
 
         // Stand in for the browser's cookies, then drop the observer so it is
         // rebuilt around the stub on the next dispatch.
-        $this->objectManager->addSharedInstance(
-            $this->objectManager->create(CookieHelperStub::class),
-            HelperFunctions::class
-        );
+        $this->helper = $this->objectManager->create(CookieHelperStub::class);
+        $this->objectManager->addSharedInstance($this->helper, HelperFunctions::class);
         $this->objectManager->removeSharedInstance(PersistTrackingDataObserver::class);
     }
 
@@ -133,6 +133,29 @@ class PersistTrackingDataObserverAreaTest extends TestCase
             'Only adminhtml is excluded. Cron carries no cookies in practice, so capture there is '
             . 'unreachable rather than wrong.'
         );
+    }
+
+    /**
+     * Consent is decided by what the payload grants, so a payload that simply omits a required
+     * type must not read as consent.
+     *
+     * @magentoAppArea webapi_rest
+     */
+    public function testDoesNotCaptureWhenARequiredConsentTypeIsMissing(): void
+    {
+        $this->helper->setConsent(['consent' => ['functional' => 'granted'], 'handler' => 'custom']);
+
+        $this->assertNotCaptured('A payload without the required consent type must not count as consent.');
+    }
+
+    /**
+     * @magentoAppArea webapi_rest
+     */
+    public function testDoesNotCaptureWhenConsentIsEmpty(): void
+    {
+        $this->helper->setConsent(['consent' => []]);
+
+        $this->assertNotCaptured('An empty consent payload must not count as consent.');
     }
 
     /**
