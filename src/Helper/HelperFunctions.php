@@ -116,6 +116,16 @@ class HelperFunctions
     }
 
     /**
+     * Retrieves the host of the current request
+     *
+     * @return string
+     */
+    public function getHost(): string
+    {
+        return $this->request->getHttpHost();
+    }
+
+    /**
      * Retrieves the referring URL of the current request
      *
      * @return string

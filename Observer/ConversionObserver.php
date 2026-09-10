@@ -46,6 +46,29 @@ class ConversionObserver implements ObserverInterface
     }
 
     /**
+     * Whether the order may be reported yet.
+     *
+     * Offline methods settle outside the shop
+     *
+     * @param Order $order
+     * @return bool
+     */
+    private function isReportable(Order $order): bool
+    {
+        if ($order->isCanceled() || $order->getState() === Order::STATE_CLOSED) {
+            return false;
+        }
+
+        if (in_array($order->getState(), self::PAID_STATES, true)) {
+            return true;
+        }
+
+        $payment = $order->getPayment();
+
+        return $payment !== null && $payment->getMethodInstance()->isOffline();
+    }
+
+    /**
      * Reports the conversion once the order has reached a paid state, at most once per order.
      *
      * @param Observer $observer
@@ -73,7 +96,7 @@ class ConversionObserver implements ObserverInterface
                 return;
             }
 
-            if (!in_array($order->getState(), self::PAID_STATES, true)) {
+            if (!$this->isReportable($order)) {
                 return;
             }
 
@@ -83,6 +106,7 @@ class ConversionObserver implements ObserverInterface
                 $order->getData('beslist_visitor_ip'),
                 $order->getData('beslist_user_agent'),
                 $order->getData('beslist_language'),
+                $order->getData('beslist_host'),
                 $order->getData('beslist_referrer'),
                 (float) $order->getGrandTotal(),
                 (string) $order->getIncrementId(),

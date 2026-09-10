@@ -39,6 +39,10 @@ class ConversionObserverTest extends TestCase
     private const VISITOR_IP = '6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b';
     private const USER_AGENT = 'Mozilla/5.0 (Test) AppleWebKit/537.36 Chrome/140.0.0.0 Safari/537.36';
     private const LANGUAGE = 'nl-NL';
+    /** The core fixture uses checkmo, which is offline and so reports at placement. */
+    private const REDIRECT_METHOD = 'paypal_express';
+    private const OFFLINE_METHOD = 'checkmo';
+    private const HOST = 'browsed.example.com';
     private const REFERRER = 'https://shop.example.com/checkout/';
 
     /** @var ObjectManager */
@@ -47,6 +51,8 @@ class ConversionObserverTest extends TestCase
     private $curl;
     /** @var OrderRepositoryInterface */
     private $orderRepository;
+    /** @var string */
+    private $paymentMethod = self::REDIRECT_METHOD;
 
     protected function setUp(): void
     {
@@ -58,6 +64,7 @@ class ConversionObserverTest extends TestCase
         $this->forgetTrackingInstances();
 
         $this->orderRepository = $this->objectManager->get(OrderRepositoryInterface::class);
+        $this->paymentMethod = self::REDIRECT_METHOD;
     }
 
     protected function tearDown(): void
@@ -234,6 +241,41 @@ class ConversionObserverTest extends TestCase
     }
 
     /**
+     * A bank transfer or an invoice paid later settles outside the shop, so payment can never be
+     * confirmed here and the order is reported as placed.
+     *
+     * @magentoDataFixture Magento/Sales/_files/order.php
+     * @magentoConfigFixture current_store beslist_tracking_tracking/tracking_settings/enable_tracking 1
+     * @magentoConfigFixture current_store beslist_tracking_tracking/tracking_settings/advertiser_id 4321
+     */
+    public function testReportsAnOfflineOrderWithoutWaitingForPayment(): void
+    {
+        $this->paymentMethod = self::OFFLINE_METHOD;
+
+        $this->saveOrderInState(Order::STATE_NEW, true);
+
+        $this->assertSame(
+            1,
+            $this->curl->getRequestCount(),
+            'An offline order must be reported at placement - its payment is never confirmed here.'
+        );
+    }
+
+    /**
+     * @magentoDataFixture Magento/Sales/_files/order.php
+     * @magentoConfigFixture current_store beslist_tracking_tracking/tracking_settings/enable_tracking 1
+     * @magentoConfigFixture current_store beslist_tracking_tracking/tracking_settings/advertiser_id 4321
+     */
+    public function testDoesNotReportACancelledOfflineOrder(): void
+    {
+        $this->paymentMethod = self::OFFLINE_METHOD;
+
+        $this->saveOrderInState(Order::STATE_CANCELED, true);
+
+        $this->assertSame(0, $this->curl->getRequestCount(), 'A cancelled order must never be reported.');
+    }
+
+    /**
      * @magentoDataFixture Magento/Sales/_files/order.php
      * @magentoConfigFixture current_store beslist_tracking_tracking/tracking_settings/enable_tracking 1
      * @magentoConfigFixture current_store beslist_tracking_tracking/tracking_settings/advertiser_id 4321
@@ -247,9 +289,9 @@ class ConversionObserverTest extends TestCase
         $this->assertSame(1, $this->curl->getRequestCount(), 'The conversion must have been sent.');
 
         $this->assertSame(
-            'shop.example.com',
+            self::HOST,
             $this->curl->getDecodedRequest()['location']['host'] ?? null,
-            'The conversion must report the shop host from configuration, not the confirming request.'
+            'The conversion must report the host captured at placement, not the confirming request.'
         );
     }
 
@@ -366,8 +408,11 @@ class ConversionObserverTest extends TestCase
             $order->setData('beslist_visitor_ip', self::VISITOR_IP);
             $order->setData('beslist_user_agent', self::USER_AGENT);
             $order->setData('beslist_language', self::LANGUAGE);
+            $order->setData('beslist_host', self::HOST);
             $order->setData('beslist_referrer', self::REFERRER);
         }
+
+        $order->getPayment()->setMethod($this->paymentMethod);
 
         $order->setState($state)
             ->setStatus($order->getConfig()->getStateDefaultStatus($state));

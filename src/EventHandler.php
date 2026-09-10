@@ -210,6 +210,7 @@ class EventHandler
      * @param string|null $hashedVisitorIP
      * @param string|null $userAgent
      * @param string|null $language
+     * @param string|null $host
      * @param string|null $referrer
      * @param float $value
      * @param string $transactionID
@@ -224,6 +225,7 @@ class EventHandler
         ?string $hashedVisitorIP,
         ?string $userAgent,
         ?string $language,
+        ?string $host,
         ?string $referrer,
         float   $value,
         string  $transactionID,
@@ -255,7 +257,7 @@ class EventHandler
 
         // The factory fills the location from the request that confirmed payment - a webhook or
         // an admin action - whose path and query carry admin secret keys and callback tokens.
-        $storeHost = $this->settingsHelper->getStoreHost($storeId);
+        $storeHost = $host ?: $this->settingsHelper->getStoreHost($storeId);
         if ($storeHost) {
             $event->location->setProtocol('https:');
             $event->location->setHost($storeHost);
@@ -406,7 +408,9 @@ class EventHandler
             }
 
             $this->curl->setHeaders($headers);
-            $this->curl->setTimeout(20);
+            // An offline order is reported inside the customer's checkout request, so
+            // a slow endpoint would delay checkout. A timed-out event is queued, not lost.
+            $this->curl->setTimeout(BeslistTrackingConfiguration::SEND_TIMEOUT_SECONDS);
             $this->curl->post(
                 BeslistTrackingConfiguration::BESLIST_ENDPOINT_URL,
                 $this->jsonSerializer->serialize($event->toArray())

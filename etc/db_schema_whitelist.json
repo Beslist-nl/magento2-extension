@@ -26,7 +26,8 @@
             "beslist_conversion_sent": true,
             "beslist_user_agent": true,
             "beslist_language": true,
-            "beslist_referrer": true
+            "beslist_referrer": true,
+            "beslist_host": true
         }
     }
 }

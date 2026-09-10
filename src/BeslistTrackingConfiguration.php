@@ -31,6 +31,7 @@ class BeslistTrackingConfiguration
     public const QUEUED_EVENT_MAX_AGE_MODIFIER = '-1 month';
     public const USER_AGENT_MAX_LENGTH = 250;
     public const REFERRER_MAX_LENGTH = 512;
+    public const SEND_TIMEOUT_SECONDS = 3;
     public const CONSENT_TYPE_NECESSARY = 'necessary';
     public const CONSENT_TYPE_FUNCTIONAL = 'functional';
     public const CONSENT_TYPE_ANALYTICS = 'analytics';
