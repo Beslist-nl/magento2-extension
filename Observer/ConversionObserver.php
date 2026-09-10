@@ -14,7 +14,7 @@ use Throwable;
 
 class ConversionObserver implements ObserverInterface
 {
-    private const array PAID_STATES = [
+    private const PAID_STATES = [
         Order::STATE_PROCESSING,
         Order::STATE_COMPLETE,
     ];
