@@ -38,6 +38,23 @@ class SettingsHelper
     }
 
     /**
+     * Checks whether the cookieless pings are enabled in the store configuration.
+     *
+     * @return bool
+     */
+    public function areCookielessPingsEnabled(): bool
+    {
+        if (!$this->isTrackingEnabled()) {
+            return false;
+        }
+
+        return $this->scopeConfig->isSetFlag(
+            'beslist_tracking_tracking/tracking_settings/enable_cookieless_pings',
+            ScopeInterface::SCOPE_STORE
+        );
+    }
+
+    /**
      * Retrieves the configured Advertiser ID from the store configuration.
      *
      * @return string|null

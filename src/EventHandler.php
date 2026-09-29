@@ -406,8 +406,6 @@ class EventHandler
         try {
             $headers = ['Content-Type' => 'application/json'];
 
-            // The endpoint reads the user agent from the request header and overwrites
-            // whatever the payload carries, so it has to travel as a header.
             if ($event->getUserAgent() !== '') {
                 $headers['User-Agent'] = $event->getUserAgent();
             }

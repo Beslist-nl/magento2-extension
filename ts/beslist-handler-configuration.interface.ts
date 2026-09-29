@@ -9,4 +9,12 @@ export interface BeslistHandlerConfigurationInterface {
     sessionIDCookieName: string,
     consentFromAction: {[key: string]: string},
     areCustomTriggersEnabled: boolean,
+    advertiserID?: string,
+    pluginVersion: string,
+    cookielessPingsEnabled: boolean,
+    conversionData?: {
+        value: number,
+        transactionID: string,
+        includingVAT: boolean,
+    } | null,
 }

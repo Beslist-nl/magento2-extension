@@ -1,0 +1,15 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "module": "CommonJS",
+        "moduleResolution": "Node",
+        "rootDir": ".",
+        "outDir": "./var/js-test",
+        "target": "ES2020",
+        "types": ["node"],
+        "paths": {
+            "@beslist-nl/beslist-tracking-sdk": ["./node_modules/@beslist-nl/beslist-tracking-sdk/dist/index.d.ts"]
+        }
+    },
+    "include": ["ts/ConsentHandler/**/*.ts", "Test/Js/**/*.ts"]
+}

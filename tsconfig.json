@@ -4,7 +4,7 @@
     "rootDir": "./ts",
     "module": "ESNext",
     "target": "ES5",
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "strict": true,
     "baseUrl": "./",

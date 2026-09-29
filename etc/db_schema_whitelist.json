@@ -28,7 +28,8 @@
             "beslist_language": true,
             "beslist_referrer": true,
             "beslist_host": true,
-            "beslist_conversion_attempts": true
+            "beslist_conversion_attempts": true,
+            "beslist_ping_sent": true
         }
     }
 }

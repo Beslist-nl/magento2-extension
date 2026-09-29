@@ -4,6 +4,7 @@
         <beslist_tracking_tracking>
             <tracking_settings>
                 <enable_tracking>0</enable_tracking>
+                <enable_cookieless_pings>1</enable_cookieless_pings>
             </tracking_settings>
         </beslist_tracking_tracking>
         <beslist_tracking_consent>

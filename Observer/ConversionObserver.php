@@ -4,6 +4,7 @@ namespace Beslist\BeslistTracking\Observer;
 
 use Beslist\BeslistTracking\Helper\SettingsHelper;
 use Beslist\BeslistTracking\src\BeslistTrackingConfiguration;
+use Beslist\BeslistTracking\Model\OrderReportability;
 use Beslist\BeslistTracking\src\EventHandler;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
@@ -14,11 +15,6 @@ use Throwable;
 
 class ConversionObserver implements ObserverInterface
 {
-    private const PAID_STATES = [
-        Order::STATE_PROCESSING,
-        Order::STATE_COMPLETE,
-    ];
-
     /** @var LoggerInterface */
     protected LoggerInterface $logger;
     /** @var EventHandler */
@@ -27,46 +23,28 @@ class ConversionObserver implements ObserverInterface
     private SettingsHelper $settingsHelper;
     /** @var OrderResource */
     private OrderResource $orderResource;
+    /** @var OrderReportability */
+    private OrderReportability $orderReportability;
 
     /**
      * @param LoggerInterface $logger
      * @param EventHandler $eventHandler
      * @param SettingsHelper $settingsHelper
      * @param OrderResource $orderResource
+     * @param OrderReportability $orderReportability
      */
     public function __construct(
-        LoggerInterface $logger,
-        EventHandler    $eventHandler,
-        SettingsHelper  $settingsHelper,
-        OrderResource   $orderResource
+        LoggerInterface    $logger,
+        EventHandler       $eventHandler,
+        SettingsHelper     $settingsHelper,
+        OrderResource      $orderResource,
+        OrderReportability $orderReportability
     ) {
         $this->logger = $logger;
         $this->eventHandler = $eventHandler;
         $this->settingsHelper = $settingsHelper;
         $this->orderResource = $orderResource;
-    }
-
-    /**
-     * Whether the order may be reported yet.
-     *
-     * Offline methods settle outside the shop
-     *
-     * @param Order $order
-     * @return bool
-     */
-    private function isReportable(Order $order): bool
-    {
-        if ($order->isCanceled() || $order->getState() === Order::STATE_CLOSED) {
-            return false;
-        }
-
-        if (in_array($order->getState(), self::PAID_STATES, true)) {
-            return true;
-        }
-
-        $payment = $order->getPayment();
-
-        return $payment !== null && $payment->getMethodInstance()->isOffline();
+        $this->orderReportability = $orderReportability;
     }
 
     /**
@@ -102,7 +80,7 @@ class ConversionObserver implements ObserverInterface
                 return;
             }
 
-            if (!$this->isReportable($order)) {
+            if (!$this->orderReportability->isReportable($order)) {
                 return;
             }
 

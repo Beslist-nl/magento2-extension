@@ -1,5 +1,7 @@
+import { BeslistTracker, ConsentState, resolveConfiguration } from '@beslist-nl/beslist-tracking-sdk';
 import { BeslistHandlerConfigurationInterface } from './beslist-handler-configuration.interface';
 import { AbstractConsentHandler, ConsentData, ConsentStatusData } from './ConsentHandler/abstract.consent-handler';
+import { ConsentProviderAdapter } from './ConsentHandler/consent-provider-adapter';
 import { CookieYesConsentHandler } from './ConsentHandler/cookie-yes.consent-handler';
 import { CookiebotConsentHandler } from './ConsentHandler/cookiebot.consent-handler';
 import { CustomConsentHandler } from './ConsentHandler/custom.consent-handler';
@@ -12,6 +14,8 @@ class BeslistHandler {
     private readonly configuration: BeslistHandlerConfigurationInterface;
     private eventHandler: EventHandler;
     private readonly consentHandler?: AbstractConsentHandler;
+    private consentProvider?: ConsentProviderAdapter;
+    private lastConsent?: ConsentStatusData;
     private hasSentSessionStart = false;
 
     constructor(configuration: BeslistHandlerConfigurationInterface) {
@@ -33,9 +37,15 @@ class BeslistHandler {
         if (!this.consentHandler) {
             console.info('Beslist Tracking: No ConsentHandler initialized.');
         } else {
+            this.consentProvider = new ConsentProviderAdapter(
+                this.consentHandler,
+                this.configuration.requiredConsentTypes
+            );
             this.consentHandler.subscribe((consentData) => this.handleConsentUpdateEvent(consentData));
             this.consentHandler.initialize();
         }
+
+        this.sendCookielessPings();
     }
 
     public addCustomConsentMethods(): void {
@@ -53,6 +63,8 @@ class BeslistHandler {
     }
 
     public handleConsentUpdateEvent(consentData: ConsentData): void {
+        this.lastConsent = consentData.consent;
+
         CookieHandler.setCookie(this.configuration.consentCookieName, JSON.stringify(consentData), 365 * 24 * 60 * 60);
 
         if (this.configuration.hasQueuedEvents && this.isConsentOfTypesGranted(this.configuration.requiredConsentTypes, consentData.consent)) {
@@ -70,6 +82,52 @@ class BeslistHandler {
                 }
             });
         }
+    }
+
+    private sendCookielessPings(): void {
+        if (!this.configuration.cookielessPingsEnabled || !this.configuration.advertiserID) {
+            return;
+        }
+
+        let tracker: BeslistTracker;
+
+        try {
+            tracker = new BeslistTracker(
+                resolveConfiguration(this.configuration.advertiserID, {
+                    implementationType: 'magento_plugin-' + this.configuration.pluginVersion,
+                    cookielessPingEnabled: true,
+                    captureMidSessionReferrer: true,
+                }),
+                this.consentProvider ? {consent: this.consentProvider} : {}
+            );
+        } catch (error) {
+            console.error('Beslist Tracking: could not start the cookieless ping tracker.', error);
+            return;
+        }
+
+        const consent = this.getConsentState();
+
+        tracker.sendSessionStartPing(consent).catch((error) => console.error(error));
+
+        const conversionData = this.configuration.conversionData;
+        if (conversionData) {
+            tracker.sendConversionPing(conversionData, consent).catch((error) => console.error(error));
+        }
+    }
+
+    /**
+     * The visitor's consent as the ping reports it, or undefined when no platform answered.
+     */
+    private getConsentState(): ConsentState | undefined {
+        if (!this.lastConsent) {
+            return undefined;
+        }
+
+        return {
+            functional: this.lastConsent.functional === 'granted',
+            analytics: this.lastConsent.analytics === 'granted',
+            marketing: this.lastConsent.marketing === 'granted',
+        };
     }
 
     private isConsentOfTypesGranted(consentTypes: string[], consentStatusData: ConsentStatusData): boolean {

@@ -1,9 +1,9 @@
 {
   "name": "beslisttracking",
-  "version": "1.0.0",
+  "version": "1.3.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "tsc -p tsconfig.test.json && node --test var/js-test/Test/Js/",
     "build": "webpack --mode production",
     "watch": "webpack --watch --mode production"
   },
@@ -11,7 +11,9 @@
   "author": "",
   "license": "ISC",
   "description": "",
-  "dependencies": {},
+  "dependencies": {
+    "@beslist-nl/beslist-tracking-sdk": "^2.5.2"
+  },
   "devDependencies": {
     "@types/node": "^22.15.29",
     "ts-loader": "^9.5.2",
