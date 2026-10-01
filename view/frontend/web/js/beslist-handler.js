@@ -2250,7 +2250,6 @@ var CookiebotConsentHandler = /** @class */ (function (_super) {
     CookiebotConsentHandler.prototype.initializeConsentUpdateListener = function () {
         var _this = this;
         window.addEventListener('CookiebotOnConsentReady', function () {
-            console.log('CookiebotOnConsentReady');
             if (_this.getConsentFromCookie('marketing') === true) {
                 _this.updateConsent({
                     marketing: 'granted',
@@ -2533,7 +2532,6 @@ var BeslistHandler = /** @class */ (function () {
         var _this = this;
         this.hasSentSessionStart = false;
         this.configuration = configuration;
-        console.log(this.configuration);
         if (this.configuration.areCustomTriggersEnabled) {
             this.addCustomConsentMethods();
         }

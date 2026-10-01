@@ -52,7 +52,6 @@ export class CookiebotConsentHandler extends AbstractConsentHandler {
 
     public initializeConsentUpdateListener(): void {
         window.addEventListener('CookiebotOnConsentReady', () => {
-            console.log('CookiebotOnConsentReady');
             if (this.getConsentFromCookie('marketing') === true) {
                 this.updateConsent({
                     marketing: 'granted',

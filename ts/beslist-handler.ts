@@ -20,7 +20,6 @@ class BeslistHandler {
 
     constructor(configuration: BeslistHandlerConfigurationInterface) {
         this.configuration = configuration;
-        console.log(this.configuration);
 
         if (this.configuration.areCustomTriggersEnabled) {
             this.addCustomConsentMethods();
